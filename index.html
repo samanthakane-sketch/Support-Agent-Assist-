@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Support Agent Assist v4</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #F7F6FF;
+    --surface: #FFFFFF;
+    --surface2: #F0EFFE;
+    --border: #E4E1FF;
+    --border2: #CCC8FF;
+    --text: #1A1830;
+    --text2: #6B6888;
+    --text3: #A09DBF;
+    --accent: #5B4FE8;
+    --accent2: #7B72F0;
+    --accent-bg: #EEecFF;
+    --green: #16A34A;
+    --green-bg: #DCFCE7;
+    --amber: #D97706;
+    --amber-bg: #FEF3C7;
+    --red: #DC2626;
+    --red-bg: #FEE2E2;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(91,79,232,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(91,79,232,0.12), 0 2px 4px rgba(0,0,0,0.06);
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; font-size: 14px; }
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 20px; display: flex; align-items: stretch; justify-content: space-between; flex-shrink: 0; box-shadow: var(--shadow); }
+  .logo-area { display: flex; align-items: center; gap: 10px; padding: 12px 0; }
+  .logo-icon { width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; color: white; font-size: 15px; flex-shrink: 0; box-shadow: 0 2px 8px rgba(91,79,232,0.3); }
+  .logo-title { font-size: 15px; font-weight: 600; color: var(--text); letter-spacing: -0.2px; }
+  .logo-sub { font-size: 11px; color: var(--text3); margin-top: 1px; font-family: 'DM Mono', monospace; }
+  .header-right { display: flex; align-items: center; gap: 4px; }
+  .tab-btn { background: none; border: none; cursor: pointer; padding: 8px 14px; font-size: 13px; font-weight: 500; color: var(--text2); border-bottom: 2px solid transparent; transition: all 0.15s; font-family: 'DM Sans', sans-serif; height: 100%; display: flex; align-items: center; gap: 6px; }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-btn:hover:not(.active) { color: var(--text); }
+  .count-badge { background: var(--accent-bg); color: var(--accent); border-radius: 20px; padding: 1px 7px; font-size: 10px; font-weight: 600; }
+  .agent-name { font-size: 12px; color: var(--text3); padding-left: 12px; border-left: 1px solid var(--border); margin-left: 4px; font-family: 'DM Mono', monospace; }
+  .new-btn { display: flex; align-items: center; gap: 5px; background: none; border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 5px 12px; cursor: pointer; color: var(--accent); font-size: 12px; font-weight: 500; font-family: 'DM Sans', sans-serif; margin-left: 8px; transition: all 0.15s; }
+  .new-btn:hover { background: var(--accent-bg); }
+
+  .body { flex: 1; overflow-y: auto; padding: 24px 20px 0; }
+
+  .empty-state { max-width: 620px; margin: 0 auto; animation: fadeUp 0.4s ease; }
+  .empty-title { font-size: 22px; font-weight: 600; color: var(--text); letter-spacing: -0.4px; text-align: center; margin-bottom: 6px; }
+  .empty-sub { font-size: 13px; color: var(--text2); text-align: center; margin-bottom: 24px; }
+  .suggest-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .suggest-btn { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 13px 15px; text-align: left; cursor: pointer; font-size: 13px; color: var(--text); line-height: 1.45; font-weight: 500; transition: all 0.15s; font-family: 'DM Sans', sans-serif; box-shadow: var(--shadow); }
+  .suggest-btn:hover { border-color: var(--accent2); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+
+  .messages { max-width: 720px; margin: 0 auto; }
+  .msg-row { display: flex; margin-bottom: 16px; animation: fadeUp 0.25s ease; }
+  .msg-row.user { justify-content: flex-end; }
+  .bot-avatar { width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; flex-shrink: 0; margin-right: 8px; margin-top: 2px; box-shadow: 0 2px 6px rgba(91,79,232,0.25); }
+  .bubble { max-width: 85%; border-radius: 4px 14px 14px 14px; padding: 11px 14px; font-size: 13.5px; line-height: 1.7; box-shadow: var(--shadow); }
+  .bubble.user { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: white; border-radius: 14px 14px 4px 14px; }
+  .bubble.bot { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+  .bubble.bot p { margin: 2px 0; }
+  .bubble.bot strong { font-weight: 600; }
+  .bubble.bot a { color: var(--accent); text-decoration: underline; }
+
+  .msg-meta { display: flex; align-items: center; gap: 6px; margin-top: 7px; flex-wrap: wrap; }
+  .chip { display: inline-flex; align-items: center; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; letter-spacing: 0.2px; }
+  .conf-badge { font-size: 10px; font-weight: 600; font-family: 'DM Mono', monospace; }
+  .fb-group { margin-left: auto; display: flex; gap: 4px; }
+  .fb-btn { background: none; border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; cursor: pointer; font-size: 12px; transition: all 0.15s; font-family: 'DM Sans', sans-serif; }
+  .fb-btn:hover { background: var(--surface2); }
+  .fb-btn.up { background: var(--green-bg); border-color: var(--green); }
+  .fb-btn.down { background: var(--red-bg); border-color: var(--red); }
+
+  .correction-area { margin-top: 8px; background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 10px 12px; }
+  .correction-label { font-size: 11px; color: var(--text2); margin-bottom: 6px; }
+  .correction-input { width: 100%; border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 7px 10px; font-size: 13px; font-family: 'DM Sans', sans-serif; background: var(--surface); color: var(--text); resize: none; }
+  .correction-input:focus { outline: none; border-color: var(--accent2); }
+  .save-btn { background: var(--accent); color: white; border: none; border-radius: 6px; padding: 5px 14px; font-size: 12px; font-weight: 500; cursor: pointer; margin-top: 6px; font-family: 'DM Sans', sans-serif; transition: background 0.15s; }
+  .save-btn:hover { background: #4a3fd4; }
+
+  .loading-bubble { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px 14px 14px 14px; padding: 11px 14px; font-size: 13px; color: var(--text2); box-shadow: var(--shadow); }
+  .error-msg { background: var(--red-bg); border: 1px solid #fca5a5; border-radius: var(--radius-sm); padding: 10px 14px; color: var(--red); font-size: 13px; margin-bottom: 12px; }
+
+  .input-area { padding: 12px 20px 20px; background: transparent; flex-shrink: 0; }
+  .input-wrap-outer { max-width: 720px; margin: 0 auto; }
+  .input-box { display: flex; align-items: flex-end; gap: 8px; background: var(--surface); border: 1.5px solid var(--border); border-radius: 14px; padding: 9px 10px 9px 15px; box-shadow: var(--shadow-md); transition: border-color 0.2s; }
+  .input-box:focus-within { border-color: var(--accent2); }
+  textarea#saa-input { flex: 1; border: none; background: transparent; font-size: 13.5px; color: var(--text); line-height: 1.55; padding: 0; font-family: 'DM Sans', sans-serif; max-height: 100px; overflow-y: auto; min-height: 22px; resize: none; }
+  textarea#saa-input:focus { outline: none; }
+  textarea#saa-input::placeholder { color: var(--text3); }
+  .send-btn { border: none; border-radius: 9px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: all 0.15s; }
+  .send-btn:disabled { cursor: not-allowed; }
+  .send-btn.active { background: linear-gradient(135deg, var(--accent), var(--accent2)); box-shadow: 0 2px 8px rgba(91,79,232,0.3); }
+  .send-btn.inactive { background: var(--surface2); }
+  .input-footer { text-align: center; font-size: 11px; color: var(--text3); margin-top: 6px; font-family: 'DM Mono', monospace; }
+
+  .analytics-wrap { max-width: 720px; margin: 0 auto; padding-bottom: 24px; }
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow); }
+  .stat-lbl { font-size: 11px; color: var(--text2); font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: 0.4px; }
+  .stat-val { font-size: 24px; font-weight: 600; color: var(--text); margin-top: 4px; letter-spacing: -0.5px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); }
+  .panel-title { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'DM Mono', monospace; }
+  .bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .bar-label { font-size: 12px; color: var(--text2); width: 56px; flex-shrink: 0; }
+  .bar-bg { flex: 1; height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+  .bar-count { font-size: 11px; color: var(--text3); width: 50px; text-align: right; font-family: 'DM Mono', monospace; flex-shrink: 0; }
+  .log-row { padding: 9px 0; border-bottom: 1px solid var(--border); }
+  .log-row:last-child { border-bottom: none; }
+  .log-meta { display: flex; gap: 8px; align-items: center; margin-top: 4px; flex-wrap: wrap; }
+  .corr-row { padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .corr-row:last-child { border-bottom: none; }
+  .corr-q { font-size: 11px; color: var(--text2); margin-bottom: 4px; font-family: 'DM Mono', monospace; }
+  .corr-answer { font-size: 13px; color: var(--text); background: var(--green-bg); border-left: 3px solid var(--green); padding: 5px 10px; border-radius: 0 6px 6px 0; }
+
+  .sync-bar { display: flex; align-items: center; gap: 6px; font-size: 11px; font-family: 'DM Mono', monospace; padding: 6px 0 14px; }
+  .sync-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .sync-dot.ok { background: var(--green); }
+  .sync-dot.syncing { background: var(--amber); animation: pulse 1.5s ease infinite; }
+  .sync-dot.error { background: var(--red); }
+
+  .modal-overlay { position: fixed; inset: 0; background: rgba(26,24,48,0.45); display: flex; align-items: center; justify-content: center; z-index: 200; animation: fadeUp 0.2s ease; }
+  .modal-box { background: var(--surface); border-radius: 16px; padding: 28px 30px; max-width: 360px; width: 90%; border: 1px solid var(--border); box-shadow: var(--shadow-md); }
+  .modal-title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 5px; }
+  .modal-sub { font-size: 13px; color: var(--text2); margin-bottom: 18px; line-height: 1.5; }
+  .modal-input { width: 100%; border: 1.5px solid var(--border2); border-radius: var(--radius-sm); padding: 9px 12px; font-size: 14px; font-family: 'DM Sans', sans-serif; background: var(--surface); color: var(--text); margin-bottom: 12px; transition: border-color 0.15s; }
+  .modal-input:focus { outline: none; border-color: var(--accent); }
+  .modal-primary { width: 100%; background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); padding: 10px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: background 0.15s; }
+  .modal-primary:hover { background: #4a3fd4; }
+  .modal-skip { width: 100%; background: none; border: none; color: var(--text3); font-size: 12px; cursor: pointer; margin-top: 8px; font-family: 'DM Sans', sans-serif; padding: 4px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+
+// ─── CONFIG — update CODA_TOKEN if you regenerate your API key ───────────────
+const CODA_TOKEN   = '37f26693-2d56-4119-aba2-3ca237090212'; // ← swap here after regenerating
+const CODA_DOC_ID  = 'oLrS0yawI9';
+const TABLE_LOGS   = 'grid-tu8GgNFV';   // SAA Query Log
+const TABLE_CORR   = 'grid-tGbDaS';     // SAA Corrections
+// ─────────────────────────────────────────────────────────────────────────────
+
+const CODA_BASE = 'https://coda.io/apis/v1';
+
+async function codaInsertRow(tableId, cells) {
+  try {
+    await fetch(`${CODA_BASE}/docs/${CODA_DOC_ID}/tables/${tableId}/rows`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${CODA_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rows: [{ cells }] })
+    });
+  } catch(e) { console.warn('Coda write failed', e); }
+}
+
+async function codaUpdateRow(tableId, rowId, cells) {
+  try {
+    await fetch(`${CODA_BASE}/docs/${CODA_DOC_ID}/tables/${tableId}/rows/${rowId}`, {
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer ${CODA_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ row: { cells } })
+    });
+  } catch(e) { console.warn('Coda update failed', e); }
+}
+
+async function codaFetchRows(tableId, limit = 500) {
+  try {
+    const res = await fetch(
+      `${CODA_BASE}/docs/${CODA_DOC_ID}/tables/${tableId}/rows?limit=${limit}&sortBy=natural&direction=desc`,
+      { headers: { 'Authorization': `Bearer ${CODA_TOKEN}` } }
+    );
+    const data = await res.json();
+    return data.items || [];
+  } catch(e) { console.warn('Coda fetch failed', e); return []; }
+}
+
+function rowVal(row, col) {
+  if (!row?.values) return '';
+  // Coda returns values keyed by column name
+  return row.values[col] ?? '';
+}
+
+const CODA_DOCS = [
+  { id: "oLrS0yawI9", name: "BPO Home", desc: "Main hub: glossary, QA, client nav, payor partnerships, escalations, client portal, telehealth, billing, compliance, retention, referrals, tools" },
+  { id: "jRbxZk1UqU", name: "BPO Billing Guide", desc: "Billing procedures, insurance, claims, payments" },
+  { id: "SJmXlpkbKz", name: "BPO Social Support Guide", desc: "Social support workflows and procedures" },
+  { id: "vv11QAuCRl", name: "BPO Provider Support Guide", desc: "Provider-facing support workflows" },
+  { id: "akxsqlJn3t", name: "BPO and VA Team Hub", desc: "BPO and VA team operations, schedules, resources" },
+  { id: "r-JzRo66M_", name: "BPO Medicare/Caid Potential Scope", desc: "Medicare and Medicaid scope" },
+  { id: "jned7jmJ92", name: "BPO KP Edits", desc: "Kaiser Permanente edits and workflows" },
+  { id: "BLE3y-oFys", name: "BPO with Grow", desc: "BPO partnership overview" },
+  { id: "3Kb83SuR_g", name: "BPO at Grow", desc: "BPO operations at Grow" },
+  { id: "cy6GooCSd4", name: "BPO Summary - April to August 2024", desc: "Historical BPO performance" },
+  { id: "csNtQx6AvN", name: "Sr Manager - BPO Rubric", desc: "Senior manager evaluation rubric" },
+];
+const CODA_DOC_LIST = CODA_DOCS.map(d => `  - **${d.name}** (docId: ${d.id}) — ${d.desc}`).join('\n');
+
+const SYSTEM_PROMPT = `You are the Support Agent Assist tool for Grow Therapy. Your sole purpose is to answer support agent questions accurately and quickly by searching connected knowledge bases and Slack channels. You do not speculate, invent information, or answer from general knowledge. Every answer must be grounded in the sources provided to you.
+
+## Connected Sources
+
+### PRIMARY — Coda BPO Workspace (SEARCH FIRST)
+${CODA_DOC_LIST}
+
+**Coda Search Strategy:**
+1. Search the most likely doc(s) first. Use coda_get_page_content or coda_list_pages.
+2. Search at least 2-3 BPO docs if first doesn't answer.
+3. BPO Home (oLrS0yawI9) covers almost everything — search it for nearly every question.
+4. Billing: search BOTH BPO Billing Guide AND Billing section in BPO Home.
+5. Provider: search BOTH BPO Provider Support Guide AND BPO Home.
+6. NEVER use archived sections.
+
+### SECONDARY — Only if Coda lacks the answer
+- Intercom Help Centers: https://help.growtherapy.com/en/ and https://help.growtherapy.com/clients/en/
+
+### TERTIARY — Only if Coda AND Intercom lack the answer
+- Slack Channels: C07TXMUGNR5, C075F9PGALF, C07CR13FXQS, C06HWDXQE81, C07LAER1G57
+
+## Behavior Rules
+1. ALWAYS search Coda first across multiple docs.
+2. Cite every claim with source (Coda doc title + page, Slack channel + date, or Intercom article + URL).
+3. Never fabricate. If not in sources, say so.
+4. Never reference archived Coda content.
+5. Prefer recency — flag conflicts.
+6. Be concise — lead with direct answer, then details and sources.
+
+## Response Format
+Always structure exactly like this:
+
+**Answer**
+[Direct answer in 1-3 sentences.]
+
+**Details**
+[Expanded explanation or steps if needed.]
+
+**Sources**
+- [Source type] — [Title or channel] — [Link or location]
+
+**Confidence:** [High / Medium / Low] — [One sentence reason.]
+
+## Tone
+Professional, warm, direct. Never use filler phrases. For multi-step processes, use numbered lists.`;
+
+const SUGGESTED = [
+  "What's the process for handling a provider billing dispute?",
+  "How do I escalate a client safety concern?",
+  "What are the steps for onboarding a new provider?",
+  "How should I handle a no-show appointment?",
+];
+
+const srcColors = {
+  Coda:      { text: '#92400e', bg: '#FEF3C7', border: '#FDE68A' },
+  Intercom:  { text: '#1e40af', bg: '#DBEAFE', border: '#BFDBFE' },
+  Slack:     { text: '#9d174d', bg: '#FCE7F3', border: '#FBCFE8' },
+};
+
+function confColor(c) {
+  if (c === 'High')   return '#16A34A';
+  if (c === 'Medium') return '#D97706';
+  if (c === 'Low')    return '#DC2626';
+  return '#9CA3AF';
+}
+
+function parseConfidence(text) {
+  const m = text.match(/\*\*Confidence:\*\*\s*(High|Medium|Low)/i);
+  return m ? m[1] : 'Unknown';
+}
+
+function formatTime(ts) {
+  return new Date(ts).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+}
+
+function formatMsg(text) {
+  return text.split('\n').map(line => {
+    line = line.replace(/\*\*(.+?)\*\*/g, (_, m) => `<strong>${m}</strong>`);
+    line = line.replace(/\[(.+?)\]\((https?:\/\/[^\)]+)\)/g, (_, label, url) =>
+      `<a href="${url}" target="_blank" rel="noopener">${label}</a>`);
+    line = line.replace(/(?<!\()(https?:\/\/[^\s\)]+)/g, url =>
+      `<a href="${url}" target="_blank" rel="noopener">${url}</a>`);
+    return `<p>${line || '&nbsp;'}</p>`;
+  }).join('');
+}
+
+// ── State ────────────────────────────────────────────────────────────────────
+let state = {
+  tab: 'chat',
+  messages: [],
+  input: '',
+  loading: false,
+  searchPhase: '',
+  error: null,
+  agentName: localStorage.getItem('saa_agent') || '',
+  showNamePrompt: !localStorage.getItem('saa_agent'),
+  nameInput: '',
+  // Shared data loaded from Coda
+  sharedLogs: [],
+  sharedCorrections: [],
+  syncStatus: 'idle',   // idle | syncing | ok | error
+  lastSync: null,
+  // Local feedback map (keyed by Coda row ID)
+  feedbackMap: JSON.parse(localStorage.getItem('saa_feedback') || '{}'),
+  correctionDraft: {},
+};
+
+// ── Coda sync ────────────────────────────────────────────────────────────────
+async function syncFromCoda() {
+  state.syncStatus = 'syncing';
+  render();
+  try {
+    const [logs, corrections] = await Promise.all([
+      codaFetchRows(TABLE_LOGS, 500),
+      codaFetchRows(TABLE_CORR, 200),
+    ]);
+    state.sharedLogs = logs;
+    state.sharedCorrections = corrections;
+    state.syncStatus = 'ok';
+    state.lastSync = Date.now();
+  } catch(e) {
+    state.syncStatus = 'error';
+  }
+  render();
+}
+
+// ── Ask ──────────────────────────────────────────────────────────────────────
+async function ask(question) {
+  if (!question.trim() || state.loading) return;
+  state.error = null;
+  state.messages = [...state.messages, { role: 'user', content: question, id: Date.now() + '_u' }];
+  state.input = '';
+  state.loading = true;
+  state.searchPhase = 'Searching Coda BPO workspace (11 docs)…';
+  render();
+
+  const phaseTimer = setTimeout(() => {
+    state.searchPhase = 'Checking Intercom & Slack if needed…';
+    render();
+  }, 8000);
+
+  try {
+    // Inject verified corrections into system prompt
+    const relevantCorrections = state.sharedCorrections
+      .filter(row => {
+        const q = (rowVal(row, 'Query') || '').toLowerCase();
+        return question.toLowerCase().split(' ').some(w => w.length > 4 && q.includes(w));
+      })
+      .slice(0, 3);
+
+    let augmentedSystem = SYSTEM_PROMPT;
+    if (relevantCorrections.length > 0) {
+      augmentedSystem += '\n\n## Verified Corrections from Agent Feedback\nPrioritize this validated information:\n';
+      relevantCorrections.forEach(row => {
+        augmentedSystem += `\nQ: ${rowVal(row, 'Query')}\nVerified answer: ${rowVal(row, 'Correction')}\n`;
+      });
+    }
+
+    const apiMsgs = state.messages.map(m => ({ role: m.role, content: m.content }));
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4096,
+        system: augmentedSystem,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        mcp_servers: [
+          { type: 'url', url: 'https://sxtnpfey48.execute-api.us-east-1.amazonaws.com/mcp', name: 'coda-mcp' },
+          { type: 'url', url: 'https://mcp.intercom.com/mcp', name: 'intercom-mcp' },
+          { type: 'url', url: 'https://mcp.slack.com/mcp', name: 'slack-mcp' },
+        ],
+        messages: apiMsgs,
+      }),
+    });
+
+    clearTimeout(phaseTimer);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error?.message || 'API error');
+
+    const assistantText = data.content.filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
+    const sourcesUsed = [...new Set(
+      data.content.filter(b => b.type === 'mcp_tool_use').map(tc => {
+        if (tc.server_name === 'coda-mcp')     return 'Coda';
+        if (tc.server_name === 'intercom-mcp') return 'Intercom';
+        if (tc.server_name === 'slack-mcp')    return 'Slack';
+        return null;
+      }).filter(Boolean)
+    )];
+
+    const confidence = parseConfidence(assistantText);
+    const msgId = Date.now() + '_a';
+
+    // Write to Coda immediately
+    await codaInsertRow(TABLE_LOGS, [
+      { column: 'Timestamp',        value: new Date().toISOString() },
+      { column: 'Agent',            value: state.agentName || 'Anonymous' },
+      { column: 'Query',            value: question },
+      { column: 'Confidence',       value: confidence },
+      { column: 'Sources',          value: sourcesUsed.join(', ') },
+      { column: 'Feedback',         value: '' },
+      { column: 'Response Preview', value: assistantText.slice(0, 400) },
+    ]);
+
+    state.messages = [...state.messages, {
+      role: 'assistant', content: assistantText,
+      sources: sourcesUsed, confidence, id: msgId, query: question,
+    }];
+
+    // Refresh analytics in background
+    syncFromCoda();
+
+  } catch(e) {
+    clearTimeout(phaseTimer);
+    state.error = 'Something went wrong. Please try again.';
+    state.messages = state.messages.slice(0, -1);
+  } finally {
+    state.loading = false;
+    state.searchPhase = '';
+    render();
+    setTimeout(() => document.getElementById('saa-input')?.focus(), 100);
+  }
+}
+
+// ── Feedback ─────────────────────────────────────────────────────────────────
+async function setFeedback(msgId, val, query) {
+  const prev = state.feedbackMap[msgId];
+  state.feedbackMap[msgId] = prev === val ? null : val;
+  localStorage.setItem('saa_feedback', JSON.stringify(state.feedbackMap));
+  render();
+
+  // Find matching row in Coda by query and update feedback column
+  const matchingRow = state.sharedLogs.find(row =>
+    (rowVal(row, 'Query') || '').slice(0, 100) === (query || '').slice(0, 100)
+  );
+  if (matchingRow) {
+    await codaUpdateRow(TABLE_LOGS, matchingRow.id, [
+      { column: 'Feedback', value: state.feedbackMap[msgId] || '' }
+    ]);
+    syncFromCoda();
+  }
+}
+
+// ── Save correction ───────────────────────────────────────────────────────────
+async function saveCorrection(msgId, query) {
+  const draft = state.correctionDraft[msgId];
+  if (!draft || !draft.trim()) return;
+
+  await codaInsertRow(TABLE_CORR, [
+    { column: 'Timestamp',  value: new Date().toISOString() },
+    { column: 'Agent',      value: state.agentName || 'Anonymous' },
+    { column: 'Query',      value: query || '' },
+    { column: 'Correction', value: draft.trim() },
+  ]);
+
+  state.correctionDraft[msgId] = '';
+  state.feedbackMap[msgId] = 'down';
+  localStorage.setItem('saa_feedback', JSON.stringify(state.feedbackMap));
+  syncFromCoda();
+  render();
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function confirmName() {
+  const val = (state.nameInput || document.getElementById('name-input')?.value || '').trim();
+  if (val) { state.agentName = val; localStorage.setItem('saa_agent', val); }
+  state.showNamePrompt = false;
+  syncFromCoda();
+  render();
+  setTimeout(() => document.getElementById('saa-input')?.focus(), 100);
+}
+function skipName() { state.showNamePrompt = false; syncFromCoda(); render(); }
+function switchTab(t) { state.tab = t; if (t === 'analytics') syncFromCoda(); render(); }
+function resetChat() { state.messages = []; state.error = null; render(); }
+
+// ── Analytics computations ────────────────────────────────────────────────────
+function getStats() {
+  const logs = state.sharedLogs;
+  const total = logs.length;
+  const conf = { High: 0, Medium: 0, Low: 0 };
+  const agentCounts = {};
+  const queryCounts = {};
+  let thumbsUp = 0, thumbsDown = 0;
+
+  logs.forEach(row => {
+    const c = rowVal(row, 'Confidence');
+    if (conf[c] !== undefined) conf[c]++;
+    const agent = rowVal(row, 'Agent') || 'Anonymous';
+    agentCounts[agent] = (agentCounts[agent] || 0) + 1;
+    const q = (rowVal(row, 'Query') || '').slice(0, 60);
+    queryCounts[q] = (queryCounts[q] || 0) + 1;
+    const fb = rowVal(row, 'Feedback');
+    if (fb === 'up') thumbsUp++;
+    if (fb === 'down') thumbsDown++;
+  });
+
+  const topQueries = Object.entries(queryCounts).sort((a,b) => b[1]-a[1]).slice(0, 5);
+  return { total, ...conf, thumbsUp, thumbsDown, topQueries, agentCounts };
+}
+
+// ── Renderers ─────────────────────────────────────────────────────────────────
+function renderSyncBar() {
+  const dot = state.syncStatus === 'ok' ? 'ok'
+            : state.syncStatus === 'syncing' ? 'syncing'
+            : state.syncStatus === 'error' ? 'error' : 'syncing';
+  const label = state.syncStatus === 'ok'      ? `Synced with Coda · ${state.sharedLogs.length} queries logged`
+              : state.syncStatus === 'syncing'  ? 'Syncing with Coda…'
+              : state.syncStatus === 'error'    ? 'Coda sync failed — check token'
+              : 'Connecting to Coda…';
+  return `<div class="sync-bar"><div class="sync-dot ${dot}"></div><span style="color:var(--text3)">${label}</span>
+    <button onclick="syncFromCoda()" style="margin-left:auto;background:none;border:1px solid var(--border2);border-radius:6px;padding:2px 10px;font-size:11px;cursor:pointer;color:var(--text2);font-family:'DM Mono',monospace">↺ Refresh</button>
+  </div>`;
+}
+
+function renderChat() {
+  const isEmpty = state.messages.length === 0;
+  if (isEmpty) {
+    return `<div class="empty-state">
+      <div class="empty-title">What do you need help with?</div>
+      <div class="empty-sub">Searches all 11 BPO Coda docs first · Intercom &amp; Slack as fallback</div>
+      <div class="suggest-grid">
+        ${SUGGESTED.map(s => `<button class="suggest-btn" onclick="ask('${s.replace(/'/g,"\\'")}') ">${s}</button>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  let html = `<div class="messages">`;
+  state.messages.forEach(m => {
+    if (m.role === 'user') {
+      html += `<div class="msg-row user"><div class="bubble user">${m.content}</div></div>`;
+    } else {
+      const fb = state.feedbackMap[m.id];
+      const showCorr = fb === 'down';
+      const draft = state.correctionDraft[m.id] || '';
+      const safeQuery = (m.query || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+      html += `<div class="msg-row">
+        <div class="bot-avatar">✦</div>
+        <div style="max-width:85%">
+          <div class="bubble bot">${formatMsg(m.content)}</div>
+          <div class="msg-meta">
+            ${(m.sources || []).map(s => {
+              const c = srcColors[s] || { text:'#555', bg:'#f5f5f5', border:'#ddd' };
+              return `<span class="chip" style="color:${c.text};background:${c.bg};border:1px solid ${c.border}">${s}</span>`;
+            }).join('')}
+            ${m.confidence ? `<span class="conf-badge" style="color:${confColor(m.confidence)}">${m.confidence}</span>` : ''}
+            <div class="fb-group">
+              <button class="fb-btn ${fb === 'up' ? 'up' : ''}" onclick="setFeedback('${m.id}','up','${safeQuery}')">👍</button>
+              <button class="fb-btn ${fb === 'down' ? 'down' : ''}" onclick="setFeedback('${m.id}','down','${safeQuery}')">👎</button>
+            </div>
+          </div>
+          ${showCorr ? `<div class="correction-area">
+            <div class="correction-label">What's the correct answer? Saved to Coda — improves responses for all agents.</div>
+            <textarea class="correction-input" rows="2" placeholder="Enter the correct answer…" oninput="state.correctionDraft['${m.id}']=this.value">${draft}</textarea>
+            <button class="save-btn" onclick="saveCorrection('${m.id}','${safeQuery}')">Save to Coda</button>
+          </div>` : ''}
+        </div>
+      </div>`;
+    }
+  });
+
+  if (state.loading) {
+    html += `<div class="msg-row">
+      <div class="bot-avatar">✦</div>
+      <div class="loading-bubble">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite;flex-shrink:0"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+        <span style="animation:pulse 2s ease infinite">${state.searchPhase}</span>
+      </div>
+    </div>`;
+  }
+  if (state.error) {
+    html += `<div class="error-msg">${state.error}</div>`;
+  }
+  html += `<div id="chat-bottom"></div></div>`;
+  return html;
+}
+
+function renderAnalytics() {
+  const s = getStats();
+  const pct = n => s.total ? Math.round(n / s.total * 100) : 0;
+  const agentEntries = Object.entries(s.agentCounts).sort((a,b) => b[1]-a[1]).slice(0, 6);
+  const maxAgent = agentEntries[0]?.[1] || 1;
+
+  return `<div class="analytics-wrap">
+    ${renderSyncBar()}
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-lbl">Total queries</div><div class="stat-val">${s.total}</div></div>
+      <div class="stat-card"><div class="stat-lbl">Helpful 👍</div><div class="stat-val" style="color:var(--green)">${s.thumbsUp}</div></div>
+      <div class="stat-card"><div class="stat-lbl">Not helpful 👎</div><div class="stat-val" style="color:var(--red)">${s.thumbsDown}</div></div>
+      <div class="stat-card"><div class="stat-lbl">Corrections</div><div class="stat-val" style="color:var(--accent)">${state.sharedCorrections.length}</div></div>
+    </div>
+
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-title">Confidence</div>
+        ${[['High','#16A34A',s.High||0],['Medium','#D97706',s.Medium||0],['Low','#DC2626',s.Low||0]].map(([l,c,n]) => `
+        <div class="bar-row">
+          <span class="bar-label">${l}</span>
+          <div class="bar-bg"><div class="bar-fill" style="width:${pct(n)}%;background:${c}"></div></div>
+          <span class="bar-count">${n} (${pct(n)}%)</span>
+        </div>`).join('')}
+      </div>
+      <div class="panel">
+        <div class="panel-title">By agent</div>
+        ${agentEntries.length === 0 ? `<div style="font-size:13px;color:var(--text3)">No data yet</div>` :
+          agentEntries.map(([name, count]) => `
+          <div class="bar-row">
+            <span class="bar-label" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:80px" title="${name}">${name}</span>
+            <div class="bar-bg"><div class="bar-fill" style="width:${Math.round(count/maxAgent*100)}%;background:var(--accent)"></div></div>
+            <span class="bar-count">${count}</span>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <div class="panel" style="margin-bottom:14px">
+      <div class="panel-title">Top queries</div>
+      ${s.topQueries.length === 0 ? `<div style="font-size:13px;color:var(--text3)">No queries yet</div>` :
+        s.topQueries.map(([q, count]) => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">
+          <span style="font-size:13px;color:var(--text)">${q}${q.length>=60?'…':''}</span>
+          <span class="chip" style="color:var(--accent);background:var(--accent-bg);border:1px solid #c7c4ff;flex-shrink:0;margin-left:8px">${count}×</span>
+        </div>`).join('')}
+    </div>
+
+    <div class="panel" style="margin-bottom:14px">
+      <div class="panel-title">Recent query log <span style="font-weight:400;color:var(--text3)">(all agents)</span></div>
+      ${state.sharedLogs.length === 0 ? `<div style="font-size:13px;color:var(--text3)">No queries logged yet</div>` :
+        state.sharedLogs.slice(0,25).map(row => {
+          const agent = rowVal(row,'Agent') || 'Anonymous';
+          const query = rowVal(row,'Query') || '';
+          const conf  = rowVal(row,'Confidence') || 'Unknown';
+          const fb    = rowVal(row,'Feedback');
+          const ts    = rowVal(row,'Timestamp');
+          const srcs  = (rowVal(row,'Sources') || '').split(',').map(s=>s.trim()).filter(Boolean);
+          return `<div class="log-row">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start">
+              <span style="font-size:13px;color:var(--text)">${query.slice(0,80)}${query.length>80?'…':''}</span>
+              <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;margin-left:8px">
+                ${fb==='up'?'<span>👍</span>':fb==='down'?'<span>👎</span>':''}
+                <span style="font-size:10px;font-weight:600;font-family:'DM Mono',monospace;color:${confColor(conf)}">${conf}</span>
+              </div>
+            </div>
+            <div class="log-meta">
+              <span style="font-size:11px;color:var(--text2);font-family:'DM Mono',monospace">${agent}</span>
+              <span style="font-size:11px;color:var(--text3)">${ts ? formatTime(new Date(ts).getTime()) : ''}</span>
+              ${srcs.map(src => {
+                const c = srcColors[src] || { text:'#555',bg:'#f5f5f5',border:'#ddd' };
+                return `<span class="chip" style="color:${c.text};background:${c.bg};border:1px solid ${c.border}">${src}</span>`;
+              }).join('')}
+            </div>
+          </div>`;
+        }).join('')}
+    </div>
+
+    ${state.sharedCorrections.length > 0 ? `<div class="panel">
+      <div class="panel-title">Learning library <span style="font-weight:400;color:var(--text3)">(${state.sharedCorrections.length} corrections)</span></div>
+      ${state.sharedCorrections.slice(0,10).map(row => `
+      <div class="corr-row">
+        <div class="corr-q">Q: ${(rowVal(row,'Query')||'').slice(0,80)}</div>
+        <div class="corr-answer">${rowVal(row,'Correction')||''}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:3px;font-family:'DM Mono',monospace">${rowVal(row,'Agent')||''} · ${rowVal(row,'Timestamp') ? formatTime(new Date(rowVal(row,'Timestamp')).getTime()) : ''}</div>
+      </div>`).join('')}
+    </div>` : ''}
+  </div>`;
+}
+
+function render() {
+  const app = document.getElementById('app');
+  if (!app) return;
+  const isChat = state.tab === 'chat';
+  const isEmpty = state.messages.length === 0;
+
+  app.innerHTML = `
+    ${state.showNamePrompt ? `<div class="modal-overlay">
+      <div class="modal-box">
+        <div class="modal-title">Who's using this?</div>
+        <div class="modal-sub">Your name is logged with each query so analytics are attributed correctly across all agents.</div>
+        <input id="name-input" class="modal-input" type="text" placeholder="Your name or agent ID"
+          oninput="state.nameInput=this.value" onkeydown="if(event.key==='Enter')confirmName()">
+        <button class="modal-primary" onclick="confirmName()">Continue</button>
+        <button class="modal-skip" onclick="skipName()">Skip (anonymous)</button>
+      </div>
+    </div>` : ''}
+
+    <div class="header">
+      <div class="logo-area">
+        <div class="logo-icon">✦</div>
+        <div>
+          <div class="logo-title">Support Agent Assist</div>
+          <div class="logo-sub">Coda · Intercom · Slack — v4 · shared analytics</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <button class="tab-btn ${isChat ? 'active' : ''}" onclick="switchTab('chat')">Chat</button>
+        <button class="tab-btn ${!isChat ? 'active' : ''}" onclick="switchTab('analytics')">
+          Analytics
+          ${state.sharedLogs.length > 0 ? `<span class="count-badge">${state.sharedLogs.length}</span>` : ''}
+        </button>
+        ${state.agentName ? `<span class="agent-name">${state.agentName}</span>` : ''}
+        ${!isEmpty && isChat ? `<button class="new-btn" onclick="resetChat()">↺ New</button>` : ''}
+      </div>
+    </div>
+
+    <div class="body">
+      ${isChat ? renderChat() : renderAnalytics()}
+    </div>
+
+    ${isChat ? `<div class="input-area">
+      <div class="input-wrap-outer">
+        <div class="input-box">
+          <textarea id="saa-input" placeholder="Ask anything — policy, process, escalation steps…"
+            oninput="state.input=this.value;this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();ask(state.input)}"
+          >${state.input}</textarea>
+          <button class="send-btn ${state.input.trim()&&!state.loading?'active':'inactive'}"
+            onclick="ask(state.input)" ${!state.input.trim()||state.loading?'disabled':''}>
+            ${state.loading
+              ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${state.input.trim()?'white':'#9CA3AF'}" stroke-width="2" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>`
+              : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${state.input.trim()?'white':'#9CA3AF'}" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>`
+            }
+          </button>
+        </div>
+        <div class="input-footer">coda-first · intercom &amp; slack fallback · analytics synced to coda</div>
+      </div>
+    </div>` : ''}
+  `;
+
+  if (isChat && !isEmpty) {
+    document.getElementById('chat-bottom')?.scrollIntoView({ behavior: 'smooth' });
+  }
+  if (state.showNamePrompt) {
+    setTimeout(() => document.getElementById('name-input')?.focus(), 50);
+  }
+}
+
+render();
+</script>
+</body>
+</html>
